@@ -3,13 +3,12 @@ import datetime
 from enum import Enum
 from dataclasses import dataclass, field
 
-@dataclass
 class Tolerance(Enum):
     MUST_RUN = "must_run"
-    DEFERABLE = "deferrable"
+    DEFERRABLE = "deferrable"
     INTERRUPTIBLE = "interruptible"
 
-@dataclass
+
 class JobStatus(Enum):
     QUEUED = "queued"
     RUNNING = "running"
@@ -18,9 +17,9 @@ class JobStatus(Enum):
     EXPIRED = "expired"
     DEAD_LETTERED = "dead_letter_queued"
 
+
 @dataclass(frozen=True)
-class Job: 
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
+class Job:
     payload: str
     priority: int
     power_required_kwh: float
@@ -29,7 +28,10 @@ class Job:
     max_retries: int
     duration_seconds: float
     status: JobStatus
-    created_at: datetime.datetime = datetime.datetime.now()
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
+    created_at: datetime.datetime = field(
+        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
+    )
 
 @dataclass
 class GridSignal: 

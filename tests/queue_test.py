@@ -3,7 +3,7 @@ import uuid
 
 import pytest 
 from scheduler.models import Job, JobStatus, Tolerance
-from scheduler.queue import _serialize, _deserialize
+from scheduler.queue import JobQueue
 
 def make_job(**kwargs) -> Job:
     defaults = {
@@ -24,6 +24,6 @@ def make_job(**kwargs) -> Job:
 # TODO: write more extensive tests for serialize and deserialize
 def test_serialize_deserialize():
     job = make_job()
-    serialized = _serialize(job)
-    deserialized = _deserialize(serialized)
+    serialized = JobQueue._to_mapping(job)
+    deserialized = JobQueue._from_mapping(serialized)
     assert deserialized == job
