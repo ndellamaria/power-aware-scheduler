@@ -5,21 +5,23 @@
 
 **Goal:** Define the core data structures and get jobs in and out of Redis.
 
-**Build:**
-- `Job` dataclass: `id`, `payload`, `priority`, `power_required_kwh`,
-  `tolerance` (`must_run | deferrable | interruptible`), `deadline`,
-  `max_retries`, `duration_seconds`, `status`, `created_at`
-- `GridSignal` dataclass: `price_per_kwh`, `carbon_intensity`,
-  `available_power_kwh`, `timestamp`
-- `JobStatus` enum: `queued`, `running`, `completed`, `failed`, `expired`
-- Redis-backed priority queue:
-  - `enqueue(job)` — atomic push to sorted set (score = -priority) + hash store
-  - `dequeue()` — atomic `ZPOPMIN`
-  - `get_job(job_id)` — lookup from hash
-  - `update_job_status(job_id, status)`
-  - `set_grid_signal(signal)` / `get_grid_signal()`
-- `docker-compose.yml` with Redis
-- Serialization helpers (JSON in/out for both Job and GridSignal)
+**Progress:**
+- [x] `models.py` — `Job`, `GridSignal`, `JobStatus`, `Tolerance`
+- [x] `queue.py` — `enqueue`, `get_job`, `update_job_status`, `_to_mapping`, `_from_mapping`
+- [x] `requirements.txt`
+- [x] `tests/queue_test.py` — round-trip serialize/deserialize test
+- [ ] `queue.py` — `dequeue()` (atomic `ZPOPMIN` + `hgetall`)
+- [ ] `queue.py` — `set_grid_signal(signal)` / `get_grid_signal()`
+- [ ] `config.py` — fill in env var reads + Redis key constants
+- [ ] `docker-compose.yml` with Redis
+- [ ] Smoke test script — enqueue 3 jobs with different priorities, dequeue and confirm order
+- [ ] Expand `queue_test.py` — priority ordering test, empty dequeue returns `None`
+
+**Known issues to fix before moving on:**
+- `make_job()` in test uses `datetime.datetime.now()` (naive) — should be
+  `datetime.now(timezone.utc)` to match model's `created_at` default
+- `config.py` is empty — queue.py doesn't import it yet, so key names are
+  hardcoded in the class. Move `QUEUE_KEY` and `JOB_KEY_PREFIX` to config.
 
 **Key decisions to think through:**
 - Why a sorted set for the queue (vs list, vs stream)?
