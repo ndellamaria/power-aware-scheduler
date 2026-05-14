@@ -1,17 +1,25 @@
-from pydantic_settings import BaseSettings
-from pydantic_core import Field
 from functools import lru_cache
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
 class Settings(BaseSettings):
-    redis_url: str = Field(..., env="REDIS_URL")
-    queue_key: str = Field(..., env="QUEUE_KEY")
-    job_key_prefix: str = Field(..., env="JOB_KEY_PREFIX")
-    grid_signal_key: str = Field(..., env="GRID_SIGNAL_KEY")
-    grid_signal_ttl_seconds: int = Field(..., env="GRID_SIGNAL_TTL_SECONDS")
-    grid_price_threshold: float = Field(..., env="GRID_PRICE_THRESHOLD")
-    worker_poll_interval: float = Field(..., env="WORKER_POLL_INTERVAL")
-    claim_ttl_seconds: int = Field(..., env="CLAIM_TTL_SECONDS")
-    log_level: str = Field(..., env="LOG_LEVEL")
+    model_config = SettingsConfigDict(
+        env_prefix="SCHEDULER_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+    )
+
+    redis_url: str = "redis://localhost:6379/0"
+    queue_key: str = "job:queue"
+    job_key_prefix: str = "job:"
+    grid_signal_key: str = "grid:signal"
+    grid_signal_ttl_seconds: int = 60
+    grid_price_threshold: float = 0.10
+    worker_poll_interval: float = 1.0
+    claim_ttl_seconds: int = 30
+    log_level: str = "INFO"
+
 
 @lru_cache
 def get_settings() -> Settings:

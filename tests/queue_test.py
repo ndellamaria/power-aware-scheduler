@@ -2,6 +2,7 @@ import datetime
 import uuid 
 
 import pytest 
+from fakeredis.aioredis import FakeRedis
 from scheduler.models import Job, JobStatus, Tolerance
 from scheduler.queue import JobQueue
 
@@ -47,3 +48,14 @@ def test_serialize_deserialize():
     serialized = JobQueue._to_mapping(job)
     deserialized = JobQueue._from_mapping(serialized)
     assert deserialized == job
+
+@pytest.fixture
+async def queue_fixture() -> JobQueue: 
+    redis = FakeRedis(decode_responses=True)
+    return JobQueue(redis)
+
+@pytest.mark.asyncio
+async def test_enqueue_dequeue(queue_fixture: JobQueue):
+    job = make_job()
+    await queue_fixture.enqueue(job)
+    assert await queue_fixture.dequeue(queue_fixture.redis) == job

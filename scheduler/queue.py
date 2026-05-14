@@ -1,5 +1,6 @@
 from datetime import datetime
 import itertools
+from typing import Awaitable, cast
 from uuid import UUID
 
 from redis.asyncio import Redis
@@ -70,23 +71,26 @@ class JobQueue:
     # for multi-writer scenario, need WATCH to ensure atomicity (?)
     async def update_job_status(self, job_id: UUID, status: JobStatus) -> None:
         job_key = f"{self.settings.job_key_prefix}{job_id}"
-        await self.redis.hset(job_key, "status", status.value)
+        # hset stub returns either async or sync, so we need to ignore the type issues
+        await self.redis.hset(job_key, "status", status.value) # pyright:ignore[reportGeneralTypeIssues]
 
     async def get_job(self, job_id: UUID) -> Job | None:
         job_key = f"{self.settings.job_key_prefix}{job_id}"
-        data = await self.redis.hgetall(job_key)
+
+        data = await self.redis.hgetall(job_key) # pyright:ignore[reportGeneralTypeIssues]
         if not data:
             return None
         return self._from_mapping(data)
 
     async def dequeue(self, redis: Redis) -> Job | None:
-        job = await redis.zpopmin(self.QUEUE_KEY, count=1)
+        job = await redis.zpopmin(self.settings.queue_key, count=1)
         if not job:
             return None
         # job is a list of tuples [(job_key, score)]
         # job[0] is the first tuple, [0][0] is the job_key
         job_key = job[0][0]
-        job_data = await redis.hgetall(job_key)
+        
+        job_data = await redis.hgetall(job_key) # pyright:ignore[reportGeneralTypeIssues]
         if not job_data:
             return None
         return self._from_mapping(job_data)
@@ -99,7 +103,7 @@ class JobQueue:
         return 
 
     async def get_grid_signal(self, redis: Redis) -> GridSignal | None:
-        grid_signal_serialized = await redis.get(self.GRID_SIGNAL_KEY)
+        grid_signal_serialized = await redis.get(self.settings.grid_signal_key)
         if not grid_signal_serialized:
             return None
         # TODO: add error handling? 
