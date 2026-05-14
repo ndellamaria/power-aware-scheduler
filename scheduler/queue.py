@@ -17,6 +17,13 @@ class JobQueue:
         self.seq = itertools.count(start=0)
 
     @staticmethod
+    def _enqueue_score(priority: int, seq: int) -> float:
+        # Lower Redis ZSET score is dequeued first. Higher `priority` must always sort
+        # before lower `priority`, with FIFO among ties. A fixed divisor (e.g. seq/10_000_000)
+        # reaches 1.0 and bleeds into the next priority band; seq/(seq+1) stays in [0, 1).
+        return -priority + (seq / (seq + 1.0))
+
+    @staticmethod
     def _to_mapping(job: Job) -> dict[str, str]:
         return {
             "id": str(job.id),
@@ -49,7 +56,7 @@ class JobQueue:
     async def enqueue(self, job: Job) -> None:
         print(f"Enqueuing job {job.id}")
         job_key = f"{self.JOB_KEY_PREFIX}{job.id}"
-        score = -job.priority + (next(self.seq) / 10_000_000)
+        score = self._enqueue_score(job.priority, next(self.seq))
         async with self.redis.pipeline(transaction=True) as pipe:
             pipe.zadd(self.QUEUE_KEY, {job_key: score}, nx=True)
             pipe.hset(job_key, mapping=self._to_mapping(job))
