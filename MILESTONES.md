@@ -10,10 +10,10 @@
 - [x] `queue.py` — `enqueue`, `get_job`, `update_job_status`, `_to_mapping`, `_from_mapping`
 - [x] `requirements.txt`
 - [x] `tests/queue_test.py` — round-trip serialize/deserialize test
-- [ ] `queue.py` — `dequeue()` (atomic `ZPOPMIN` + `hgetall`)
-- [ ] `queue.py` — `set_grid_signal(signal)` / `get_grid_signal()`
-- [ ] `config.py` — fill in env var reads + Redis key constants
-- [ ] `docker-compose.yml` with Redis
+- [x] `queue.py` — `dequeue()` (atomic `ZPOPMIN` + `hgetall`)
+- [x] `queue.py` — `set_grid_signal(signal)` / `get_grid_signal()`
+- [x] `config.py` — fill in env var reads + Redis key constants
+- [x] `docker-compose.yml` with Redis
 - [ ] Smoke test script — enqueue 3 jobs with different priorities, dequeue and confirm order
 - [ ] Expand `queue_test.py` — priority ordering test, empty dequeue returns `None`
 
